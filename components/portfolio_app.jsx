@@ -2,8 +2,17 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence, useInView, animate } from "framer-motion";
 import {
+  motion,
+  AnimatePresence,
+  useInView,
+  animate,
+  useScroll,
+  useSpring,
+  useReducedMotion,
+} from "framer-motion";
+import {
+  ArrowUp,
   GraduationCap,
   Menu,
   X,
@@ -33,6 +42,8 @@ const CONTACT = {
   linkedin: "https://www.linkedin.com/in/farsha-azizi/",
   github: "https://github.com/farshazizi",
 };
+
+const HERO_ROLES = ["Back End Developer", "Full Stack Developer", "API Architect"];
 
 const NAV_LINKS = [
   { label: "About", href: "#about" },
@@ -138,6 +149,7 @@ const PROJECTS = [
     tags: ["Full Stack", "Personal"],
     stack: ["Next.js", "GitHub", "Vercel"],
     live: "https://jatuhtempo.vercel.app",
+    logo: "/projects/jatuhtempo.png",
     period: "Aug 2026",
   },
   {
@@ -148,6 +160,7 @@ const PROJECTS = [
     tags: ["Full Stack", "Personal"],
     stack: ["Next.js", "GitHub", "Vercel"],
     live: "https://qadhaku.vercel.app",
+    logo: "/projects/qadhaku.png",
     period: "Jul 2026",
   },
   {
@@ -286,6 +299,51 @@ function Counter({ value, suffix }) {
   );
 }
 
+function useTypewriter(words, { typeMs = 80, deleteMs = 45, holdMs = 1600 } = {}) {
+  const reduce = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  const [text, setText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (reduce) return;
+    const word = words[index];
+    let delay = deleting ? deleteMs : typeMs;
+    if (!deleting && text === word) delay = holdMs;
+
+    const t = setTimeout(() => {
+      if (!deleting && text === word) setDeleting(true);
+      else if (deleting && text === "") {
+        setDeleting(false);
+        setIndex((i) => (i + 1) % words.length);
+      } else setText(word.slice(0, text.length + (deleting ? -1 : 1)));
+    }, delay);
+    return () => clearTimeout(t);
+  }, [text, deleting, index, words, reduce, typeMs, deleteMs, holdMs]);
+
+  return reduce ? words[0] : text;
+}
+
+function useActiveSection(ids) {
+  const [active, setActive] = useState("");
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => e.isIntersecting && setActive(e.target.id));
+      },
+      { rootMargin: "-45% 0px -50% 0px" }
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [ids]);
+  return active;
+}
+
+const SECTION_IDS = NAV_LINKS.map((l) => l.href.slice(1));
+
 function useCopy() {
   const [copied, setCopied] = useState(null);
   const copy = async (key, text) => {
@@ -307,6 +365,9 @@ function useCopy() {
 function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const active = useActiveSection(SECTION_IDS);
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -323,6 +384,10 @@ function Navbar() {
           : "bg-transparent"
       }`}
     >
+      <motion.div
+        className="absolute inset-x-0 top-0 h-0.5 origin-left bg-red-600"
+        style={{ scaleX: progress }}
+      />
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
         <a href="#" aria-label="Home">
           <Image src="/logo.png" alt="FA" width={40} height={40} className="rounded-lg" priority />
@@ -333,20 +398,30 @@ function Navbar() {
             <li key={l.href}>
               <a
                 href={l.href}
-                className="text-sm font-medium text-slate-600 transition-colors hover:text-red-600"
+                className={`relative py-1 text-sm font-medium transition-colors hover:text-red-600 ${
+                  active === l.href.slice(1) ? "text-red-600" : "text-slate-600"
+                }`}
               >
                 {l.label}
+                {active === l.href.slice(1) && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-red-600"
+                  />
+                )}
               </a>
             </li>
           ))}
         </ul>
 
-        <a
-          href="#contact"
-          className="hidden rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-red-600/30 transition hover:bg-red-700 md:inline-block"
-        >
-          Hire Me
-        </a>
+        <div className="hidden items-center gap-3 md:flex">
+          <a
+            href="#contact"
+            className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-red-600/30 transition hover:bg-red-700"
+          >
+            Hire Me
+          </a>
+        </div>
 
         <button
           onClick={() => setOpen(true)}
@@ -386,7 +461,9 @@ function Navbar() {
                     <a
                       href={l.href}
                       onClick={() => setOpen(false)}
-                      className="block rounded-lg px-3 py-3 font-medium text-slate-700 hover:bg-red-50 hover:text-red-600"
+                      className={`block rounded-lg px-3 py-3 font-medium hover:bg-red-50 hover:text-red-600 ${
+                        active === l.href.slice(1) ? "bg-red-50 text-red-600" : "text-slate-700"
+                      }`}
                     >
                       {l.label}
                     </a>
@@ -410,9 +487,12 @@ function Navbar() {
 
 function Hero() {
   const highlights = ["Node.js", "Express", "Laravel", "Next.js"];
+  const role = useTypewriter(HERO_ROLES);
   return (
     <section className="relative overflow-hidden bg-white pt-32 pb-20 sm:pt-40">
-      <div className="pointer-events-none absolute -top-24 right-0 h-96 w-96 rounded-full bg-red-100 blur-3xl" />
+      <div className="hero-dots pointer-events-none absolute inset-0" />
+      <div className="animate-float pointer-events-none absolute -top-24 right-0 h-96 w-96 rounded-full bg-red-100 blur-3xl" />
+      <div className="animate-float-slow pointer-events-none absolute bottom-0 -left-24 h-72 w-72 rounded-full bg-red-50 blur-3xl" />
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -427,7 +507,9 @@ function Hero() {
           <h1 className="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-6xl">
             Hi, I&apos;m Farsha Azizi.
             <br />
-            <span className="text-red-600">Back End & Full Stack</span> Developer.
+            <span className="text-red-600">{role}</span>
+            <span className="ml-1 inline-block w-1 animate-pulse bg-red-600 align-middle">&nbsp;</span>
+            <span className="sr-only">Back End & Full Stack Developer</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-600">
             7+ years building scalable APIs, robust databases, and modern web applications —
@@ -661,6 +743,15 @@ function Projects() {
                 transition={{ duration: 0.25 }}
                 className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-300 hover:shadow-xl hover:shadow-red-600/5"
               >
+                {p.logo && (
+                  <Image
+                    src={p.logo}
+                    alt={`${p.name} logo`}
+                    width={56}
+                    height={56}
+                    className="mb-4 rounded-xl border border-slate-200 bg-white"
+                  />
+                )}
                 <div className="mb-4 flex flex-wrap gap-2">
                   {p.tags.map((t) => (
                     <span
@@ -743,7 +834,7 @@ function Skills() {
 function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState("idle"); // idle | sending | sent
+  const [status, setStatus] = useState("idle"); // idle | opened
   const { copied, copy } = useCopy();
 
   const validate = (f) => {
@@ -765,12 +856,12 @@ function Contact() {
     const errs = validate(form);
     setErrors(errs);
     if (Object.keys(errs).length) return;
-    setStatus("sending");
-    // Simulated submit — replace with a real API route or email service.
-    setTimeout(() => {
-      setStatus("sent");
-      setForm({ name: "", email: "", message: "" });
-    }, 1000);
+    const subject = `Portfolio inquiry from ${form.name.trim()}`;
+    const body = `${form.message.trim()}\n\n— ${form.name.trim()}\n${form.email.trim()}`;
+    window.location.href = `mailto:${CONTACT.email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+    setStatus("opened");
   };
 
   const channels = [
@@ -869,21 +960,52 @@ function Contact() {
             </div>
             <button
               type="submit"
-              disabled={status === "sending"}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-7 py-3 font-semibold text-white shadow-lg shadow-red-600/30 transition hover:bg-red-700 disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-7 py-3 font-semibold text-white shadow-lg shadow-red-600/30 transition hover:bg-red-700"
             >
-              {status === "sending" ? "Sending..." : "Send Message"}
+              Send Message
               <Send className="h-4 w-4" />
             </button>
-            {status === "sent" && (
-              <p className="flex items-center justify-center gap-2 text-sm text-green-400">
-                <Check className="h-4 w-4" /> Thanks! Your message has been sent.
+            {status === "opened" ? (
+              <p className="text-center text-sm text-slate-300">
+                Your email app should open with the message ready — just hit send. If nothing
+                opens, email me at{" "}
+                <span className="font-medium text-white">{CONTACT.email}</span>.
               </p>
+            ) : (
+              <p className="text-center text-xs text-slate-500">Opens your email app.</p>
             )}
           </motion.form>
         </div>
       </div>
     </section>
+  );
+}
+
+function BackToTop() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 600);
+    onScroll();
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.a
+          href="#"
+          aria-label="Back to top"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          className="fixed right-5 bottom-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/30 transition hover:bg-red-700"
+          style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <ArrowUp className="h-5 w-5" />
+        </motion.a>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -925,6 +1047,7 @@ export default function PortfolioApp() {
         <Contact />
       </main>
       <Footer />
+      <BackToTop />
     </>
   );
 }
