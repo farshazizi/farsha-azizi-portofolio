@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   motion,
   AnimatePresence,
@@ -13,6 +13,7 @@ import {
 } from "framer-motion";
 import {
   ArrowUp,
+  Award,
   GraduationCap,
   Menu,
   X,
@@ -49,6 +50,7 @@ const NAV_LINKS = [
   { label: "About", href: "#about" },
   { label: "Experience", href: "#experience" },
   { label: "Academy", href: "#academy" },
+  { label: "Patent", href: "#patent" },
   { label: "Projects", href: "#projects" },
   { label: "Skills", href: "#skills" },
   { label: "Contact", href: "#contact" },
@@ -97,7 +99,7 @@ const EXPERIENCES = [
   },
   {
     company: "PT Genesys Integrated Indonesia · Surabaya",
-    role: "Senior Web Developer",
+    role: "Senior Web Developer (Full Time)",
     period: "Aug 2019 — Sep 2021",
     points: [
       "Developed ERP application modules (Sales, Purchasing, Payment).",
@@ -108,7 +110,7 @@ const EXPERIENCES = [
   },
   {
     company: "PT Genesys Integrated Indonesia · Surabaya",
-    role: "Web Developer",
+    role: "Web Developer (Contract)",
     period: "Sep 2018 — Aug 2019",
     points: [
       "Developed ERP application modules (Sales, Purchasing, Payment).",
@@ -140,6 +142,17 @@ const ACADEMY = [
   },
 ];
 
+const PATENTS = [
+  {
+    title: "Aplikasi Pemilihan Pasangan Hidup Qtaaruf Berbasis Web",
+    id: "ID 1",
+    issued: "6 Sep 2018",
+    url: "https://pdki-indonesia.dgip.go.id/detail/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    description:
+      "A web-based application to help users find a compatible life partner through the Islamic ta'aruf process, registered as intellectual property.",
+  },
+];
+
 const PROJECTS = [
   {
     name: "Jatuh Tempo",
@@ -151,6 +164,14 @@ const PROJECTS = [
     live: "https://jatuhtempo.vercel.app",
     logo: "/projects/jatuhtempo.png",
     period: "Aug 2026",
+    about:
+      "Jatuh Tempo is a web application I created to help people manage, track, and receive timely notifications for recurring bill due dates — so no payment is ever missed.",
+    features: [
+      "Manage and track recurring bills in one place",
+      "Automated due date calculation and reminder system",
+      "Prevents late payment penalties and streamlines monthly expense tracking",
+      "Optimized performance and responsive UI for a seamless cross-device experience",
+    ],
   },
   {
     name: "Qadhaku",
@@ -162,6 +183,14 @@ const PROJECTS = [
     live: "https://qadhaku.vercel.app",
     logo: "/projects/qadhaku.png",
     period: "Jul 2026",
+    about:
+      "Qadhaku is an application I created for tracking missed fasting days (Qadha & Fidyah) with an intuitive interface, helping users stay consistent with their Islamic habits.",
+    features: [
+      "Track missed fasting days (Qadha) and progress over time",
+      "Automated Fidyah calculation",
+      "Daily local notifications to keep users consistent",
+      "Lightweight build with a reliable offline-first experience",
+    ],
   },
   {
     name: "Esverita",
@@ -171,6 +200,14 @@ const PROJECTS = [
     tags: ["Full Stack", "Commercial"],
     stack: ["Laravel 11/12", "Filament 3", "MySQL", "GitHub"],
     period: "Dec 2024 — Jun 2025",
+    about:
+      "Esverita is an e-commerce application with a plant management system, giving the business a single source of truth for plant data and a traceable history of every plant's care.",
+    features: [
+      "Plant Master Data module as the core repository for plant information",
+      "Plant Log module to systematically record and monitor each plant",
+      "Activity Timeline for a structured overview of logged activities",
+      "Admin panel built with Filament for efficient data management",
+    ],
   },
   {
     name: "Starter Kit Laravel",
@@ -180,6 +217,14 @@ const PROJECTS = [
     tags: ["Backend", "Personal"],
     stack: ["Laravel", "PHP"],
     period: "2024",
+    about:
+      "A reusable Laravel starter kit I built to skip repetitive setup work and start new projects from a solid, consistent foundation.",
+    features: [
+      "Pre-configured authentication",
+      "Role management out of the box",
+      "Base UI structures ready to extend",
+      "Accelerates new project setup with consistent conventions",
+    ],
   },
   {
     name: "Bolu Ketan Cisadane",
@@ -189,15 +234,32 @@ const PROJECTS = [
     tags: ["Full Stack", "Commercial"],
     stack: ["Laravel 8", "Vue.js", "PostgreSQL", "HTML/CSS"],
     period: "Dec 2022 — Feb 2023",
+    about:
+      "A Point of Sales application for Bolu Ketan Cisadane. I worked directly with the client from requirements gathering to delivery, designing the database and building the core modules.",
+    features: [
+      "Requirements and business workflow gathering with the client",
+      "ERD and database schema design",
+      "Master data management and transaction processing",
+      "Sales reporting with optimized data input screens and analytical reports",
+    ],
   },
   {
     name: "E-Tirta Medical App",
-    tagline: "API Optimization & Booking System",
+    tagline: "Medical Booking Application",
     description:
-      "Internal APIs and a consumer booking app for medical check-ups with Midtrans payments; improved the Excel import flow by up to 400%.",
-    tags: ["Backend", "Commercial"],
+      "Designed and built responsive, intuitive interfaces for the medical booking app, integrating APIs to display data in real time.",
+    tags: ["Full Stack", "Commercial"],
     stack: ["Laravel", "Node.js", "Express.js", "Midtrans"],
-    period: "2021 — Present",
+    period: "Feb 2022 — Dec 2022",
+    about:
+      "As a Front-End Developer on the E-Tirta Medical App, I was responsible for designing and implementing a responsive and intuitive user interface. I worked closely with the design team to ensure an optimal user experience, and integrated APIs to display data in real time. I also carried out testing and debugging to make sure the application ran smoothly across devices and browsers.",
+    features: [
+      "Booking flow for Medical Check Up, Laboratory tests, and more",
+      "Pixel-accurate slicing from Figma designs with the UI/UX team",
+      "API integration with the Back End team for real-time data",
+      "Midtrans payment gateway integration",
+      "Cross-device and cross-browser testing and debugging",
+    ],
   },
 ];
 
@@ -393,7 +455,7 @@ function Navbar() {
           <Image src="/logo.png" alt="FA" width={40} height={40} className="rounded-lg" priority />
         </a>
 
-        <ul className="hidden items-center gap-8 md:flex">
+        <ul className="hidden items-center gap-6 md:flex">
           {NAV_LINKS.map((l) => (
             <li key={l.href}>
               <a
@@ -707,12 +769,195 @@ function Academy() {
   );
 }
 
+function Patent() {
+  return (
+    <section id="patent" className="bg-white py-24">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <SectionHeading eyebrow="Patent" title="Intellectual property." />
+        <div className="grid gap-6">
+          {PATENTS.map((pt) => (
+            <motion.div
+              key={pt.title}
+              {...fadeUp}
+              className="flex flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-red-300 hover:shadow-lg sm:flex-row sm:p-8"
+            >
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-600 text-white">
+                <Award className="h-7 w-7" />
+              </div>
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                    Registered
+                  </span>
+                  <span className="text-sm font-medium text-slate-500">
+                    Issued {pt.issued} · {pt.id}
+                  </span>
+                </div>
+                <h3 className="mt-2 text-xl font-bold text-slate-900">{pt.title}</h3>
+                <p className="mt-2 text-slate-600">{pt.description}</p>
+                <div className="mt-5 flex flex-wrap items-center gap-4">
+                  {pt.url && (
+                    <a
+                      href={pt.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-red-600/30 transition hover:bg-red-700"
+                    >
+                      Verify on PDKI <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProjectModal({ project, onClose }) {
+  const closeRef = useRef(null);
+
+  useEffect(() => {
+    if (!project) return;
+    const onKey = (e) => e.key === "Escape" && onClose();
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    closeRef.current?.focus();
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [project, onClose]);
+
+  return (
+    <AnimatePresence>
+      {project && (
+        <motion.div
+          className="fixed inset-0 z-60 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center sm:p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="project-modal-title"
+            initial={{ opacity: 0, y: 40, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.97 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl sm:p-8"
+          >
+            <button
+              ref={closeRef}
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute top-4 right-4 rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-4 pr-10">
+              {project.logo && (
+                <Image
+                  src={project.logo}
+                  alt={`${project.name} logo`}
+                  width={64}
+                  height={64}
+                  className="shrink-0 rounded-2xl border border-slate-200"
+                />
+              )}
+              <div>
+                <h3 id="project-modal-title" className="text-2xl font-bold text-slate-900">
+                  {project.name}
+                </h3>
+                <p className="text-sm font-medium text-slate-500">
+                  {project.tagline} · {project.period}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {project.tags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+
+            <h4 className="mt-6 text-sm font-semibold tracking-widest text-red-600 uppercase">
+              About
+            </h4>
+            <p className="mt-2 leading-relaxed text-slate-600">{project.about}</p>
+
+            <h4 className="mt-6 text-sm font-semibold tracking-widest text-red-600 uppercase">
+              Key Features
+            </h4>
+            <ul className="mt-2 space-y-2">
+              {project.features.map((f) => (
+                <li key={f} className="flex gap-2.5 text-slate-600">
+                  <Check className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <h4 className="mt-6 text-sm font-semibold tracking-widest text-red-600 uppercase">
+              Tech Stack
+            </h4>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {project.stack.map((s) => (
+                <span
+                  key={s}
+                  className="rounded-md border border-slate-200 bg-gray-50 px-2.5 py-1 text-sm font-medium text-slate-700"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+
+            {project.live && (
+              <a
+                href={project.live}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-6 py-3 font-semibold text-white shadow-lg shadow-red-600/30 transition hover:bg-red-700 sm:w-auto"
+              >
+                Visit Live Site <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function Projects() {
   const [filter, setFilter] = useState("All");
+  const [selected, setSelected] = useState(null);
+  const triggerRef = useRef(null);
+
+  const openModal = (project, el) => {
+    triggerRef.current = el;
+    setSelected(project);
+  };
+  const closeModal = useCallback(() => {
+    setSelected(null);
+    triggerRef.current?.focus();
+  }, []);
   const shown = filter === "All" ? PROJECTS : PROJECTS.filter((p) => p.tags.includes(filter));
 
   return (
-    <section id="projects" className="bg-white py-24">
+    <section id="projects" className="bg-gray-50 py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <SectionHeading eyebrow="Featured Projects" title="Selected work." />
         <div className="mb-10 flex flex-wrap gap-2">
@@ -741,7 +986,18 @@ function Projects() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.25 }}
-                className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-red-300 hover:shadow-xl hover:shadow-red-600/5"
+                role="button"
+                tabIndex={0}
+                aria-haspopup="dialog"
+                aria-label={`View details of ${p.name}`}
+                onClick={(e) => openModal(p, e.currentTarget)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openModal(p, e.currentTarget);
+                  }
+                }}
+                className="group flex cursor-pointer flex-col rounded-2xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-red-300 hover:shadow-xl hover:shadow-red-600/5 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none"
               >
                 {p.logo && (
                   <Image
@@ -777,28 +1033,36 @@ function Projects() {
                     </span>
                   ))}
                 </div>
-                {p.live && (
-                  <a
-                    href={p.live}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700"
-                  >
-                    Visit Live Site <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 group-hover:text-red-600">
+                    View details <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                  </span>
+                  {p.live && (
+                    <a
+                      href={p.live}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700"
+                    >
+                      Live Site <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
               </motion.article>
             ))}
           </AnimatePresence>
         </motion.div>
       </div>
+      <ProjectModal project={selected} onClose={closeModal} />
     </section>
   );
 }
 
 function Skills() {
   return (
-    <section id="skills" className="bg-gray-50 py-24">
+    <section id="skills" className="bg-white py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <SectionHeading eyebrow="Tech Stack" title="Skills & tools." />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -1042,6 +1306,7 @@ export default function PortfolioApp() {
         <About />
         <Experience />
         <Academy />
+        <Patent />
         <Projects />
         <Skills />
         <Contact />
